@@ -1,4 +1,4 @@
-##*****Essam Shahid Bhatti FinalHotel Challenge*****##
+####Essam Shahid Bhatti FinalHotel Challenge####
 
 
 
@@ -10,7 +10,7 @@ It is not mandatory, but you can also include an additional `README` file to exp
 
 
 
-## Detailed Information has been mentioned below each task. All the SQL are named after their tasks.***#
+# Detailed Information has been mentioned below each task. All the SQL are named after their tasks.#
 
 
 
