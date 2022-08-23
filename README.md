@@ -17,10 +17,10 @@ It is not mandatory, but you can also include an additional `README` file to exp
 
 ### Pre-Ingestion
 
-We have created 2 targets in Makefile *create-tables* and *file_prep*. The create-tables target will create empty tables for the below ingestion and analysis.
-The file_prep will prepare the file. Since *.import* SQLITE command loads complete data, we will remove the header used *sed* command and create a generic loading file "Latest_File.csv".
-Once file to be loaded is prepared, we will move the actual file to a done directory so we can have a backup of the file if it is required. We also zip the actual file to make sure there aren't any space issues.
-The above step is when we have the following ingestion running on a machine.
+	We have created 2 targets in Makefile *create-tables* and *file_prep*. The create-tables target will create empty tables for the below ingestion and analysis.
+	The file_prep will prepare the file. Since *.import* SQLITE command loads complete data, we will remove the header used *sed* command and create a generic loading file "Latest_File.csv".
+	Once file to be loaded is prepared, we will move the actual file to a done directory so we can have a backup of the file if it is required. We also zip the actual file to make sure there aren't any space issues.
+	The above step is when we have the following ingestion running on a machine.
 
 
 
