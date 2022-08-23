@@ -2,7 +2,7 @@
 insert into daily_stats
 with daily_sts as (
 select
-	event_date as DATE,
+	event_date,
 	count(distinct user_id) as visitors,
 	count(DISTINCT user_session) as sessions,
 	count(distinct (case when event_type = 'view' then user_id else NULL END)) as viewers,
@@ -18,12 +18,12 @@ GROUP BY
 select
 	*
 from
-	daily_sts
+	daily_sts  A
 WHERE
 	NOT EXISTS (
 	SELECT
 		1
 	FROM
-		daily_stats
+		daily_stats 
 	WHERE
-		DATE = DATE);
+		A.event_date = DATE);
