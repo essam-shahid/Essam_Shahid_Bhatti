@@ -1,7 +1,8 @@
-====================***Essam Shahid Bhatti FinalHotel Challenge***=========================
+##*****Essam Shahid Bhatti FinalHotel Challenge*****##
 
 
-## Assignment
+
+## Assignment ##
 
 The overal objective of the assignment is to ingest the raw files with the behavioural event data, clean them up and create a series of tables with aggregated data for analytical purposes. We will divide the challenge into several tasks. Remember to create a SQL script for each task, store it in the `sql` directory and add them to a target of the `Makefile` that will be executed when building the docker image.
 
@@ -9,12 +10,21 @@ It is not mandatory, but you can also include an additional `README` file to exp
 
 
 
-#*** Detailed Information has been mentioned below each task. All the SQL are named after their tasks.***#
+## Detailed Information has been mentioned below each task. All the SQL are named after their tasks.***#
 
 
 
 #Define Variables for file Check:
 	Variables where defined for landing files and loading files and done directory to move the file to done once we have loaded in our tables
+
+
+
+### Pre-Ingestion
+
+We have created 2 targets in Makefile *create-tables* and *file_prep*. The create-tables target will create empty tables for the below ingestion and analysis.
+The file_prep will prepare the file. Since *.import* SQLITE command loads complete data, we will remove the header used *sed* command and create a generic loading file "Latest_File.csv".
+Once file to be loaded is prepared, we will move the actual file to a done directory so we can have a backup of the file if it is required. We also zip the actual file to make sure there aren't any space issues.
+The above step is when we have the following ingestion running on a machine.
 
 
 
@@ -25,12 +35,12 @@ The objective of this step is to ingest the source data from January (`2020-Jan.
  The structure of this table will depend on the process that you use to ingest the data, but it should have **at least one column for each of the columns in the source CSV file**.
 
 
-Solution:
+##Solution:
 
-	Empty table was created for staging. The table will always be dropped and created so everytime a new file is to be loaded, we will use empty tables and reduce the risk of 
+	Empty table was created for staging in pre-ingestion. Ideally, staging table should be empty after every batch processing to avoid any duplicates but we had incorporated NOT Exists clause in the query to avoid
 	duplicates in our final table.
 	
-	Once the empty table was created, we set the mode to "csv" so input file can be handled as comma separated, and we used the sqllite3 CMD Line command "-separator ',' ".import $(file_dir)/2020-Jan.csv event_raw"
+	Once the empty table was created, we set the mode to "csv" so input file can be handled as comma separated, and we used the sqllite3 CMD Line command "-separator ',' "Latest_File.csv"
 	which allowed the file to be inserted in each column as per defined in the "create-empty-stg-table.sql". This way, each column in the source file has a column in staging table.
 	
 	
@@ -49,30 +59,34 @@ The output should be a table named `event_clean` with **exactly one column for e
 
 Solution:
 
-	We also created a clean table, which we can call clean table. This table will have all the cleansed data after the checks and fixtures are applied. The following fixtures were applied
+	We also created a clean table, which we can call `event_clean`. This table will have all the cleansed data after the checks and fixtures are applied. The following fixtures were applied
 	in the "transform-stg-table.sql":
 	
 	1) Special characters or Space in text/characters: 
 			Once we get any columns with text data type, there is always risk of having special characters like space which is not visible at first, but can cause 
-			issues while joining with dimensional tables.  Hence we added trim() function with each column to remove all the empty spaces.(CTE: RM_Space)
+			issues while joining with dimensional tables.  Hence we added trim() function with each column to remove all the empty spaces.
 			
 	2) Empty Values in Category_Code and Brand:
-			We received NULL values in the Category_Code and Brand columns. This could cause missing numbers in reporting based on Category_Code and Brand
-			so we introduced another value "OTHERS" in both columns so we can have complete reporting.(CTE: MISSING_CODE_BRAND)
+			We received NULL values in the Category_Code and Brand columns which is loaded as empty space by .import. This could cause missing numbers in reporting based on 
+			Category_Code and Brand so we introduced another value "OTHERS" in both columns so we can have complete reporting. Since we already used trim before we used *case when ...=''* which handled
+			any NULLs received.
 			
 	3) Empty Value in USER_SESSION:
 			We also received missing values in USER Session , which can cause duplicates on price or missing so we used lag and lead functions	against event
 			date and time to check whether the same session was used or not. If the event_time was equal to previous session, we tagged the previous session, 
 			if the event_time was equal to next we tagged the leading session.
-			If it was not equal, we calculated the difference and tagged the session with whoever it was closer. (CTE: MISSING_CODE_BRAND)
+			If it was not equal, we calculated the difference and tagged the session with whoever it was closer.
 			
 	4) Missing Price:
 			Although the file was fine, there might be issue if price is missing. So we use max price with window function partitioned on product_id,category_id
-			to find any missing price to calculate.(CTE: MISSING_CODE_BRAND)
+			to find any missing price to calculate.
 			
 	5) Dups assign and remove:
 			Once all the missing values were added/assigned, we used row_number() to assign rn to each row so we can finds duplicates and removed them
-			by using the 1 row for each row. (CTE: DUPS and select)
+			by using the 1 row for each row. 
+			
+	6) Event_Date and Event_Time Columns:
+			We also introduced 2 new columns by using *substr()* function on event_time so we could have day wise and hour wise data, in case any aggregation mart is required.
 
 	***We have included the NOT Exists clause so there are no duplicates in the final table if job is executed more than once with the same data.***
 
@@ -92,8 +106,8 @@ Here we want you to calculate the aggregated sales per day. The output should be
 
 Solution:
 
-	Daily_sales table was created at the start. We know,the event_type "purchase" is product purchased hence is marked as sale. We already extracted date in the above steps, 
-	we would just count all the product ids sold on each event_date. Since we removed all the duplicates above, there would not be any over reporting.
+	`daily_sales` table was created at the start. We know,the event_type "purchase" is product purchased hence is marked as sale. We already extracted date in the above step, 
+	we would just count all the product ids sold on each event_date. Since we removed all the duplicates above, there would not be any over reporting due to duplicates.
 	
 	
 	***We have included the NOT Exists clause so there are no duplicates in the final table if job is executed more than once with the same data.***
@@ -123,7 +137,7 @@ The output should be a `daily_stats` table with the following shape:
 
 Solution:
 
-	Daily_stats table was created at the start. We know,the event_types and how we can calculate the required stats. We already extracted date in the above steps, 
+	`daily_stats` table was created at the start. We know,the event_types and how we can calculate the required stats. We already extracted date in the above steps, 
 	we would just count on each event_date. Since we removed all the duplicates above, there would not be any over reporting.
 	
 	- `visitors`: Number of different users that have visited the store: 
@@ -179,7 +193,7 @@ The output should be a `daily_funnel` table with the following shape:
 
 Solution:
 
-	Daily_funnel table was created at the start. We did all the necessary calculations in the previous steps. We already extracted date in the above steps, 
+	`daily_funnel` table was created at the start. We did all the necessary calculations in the previous steps. We already extracted date in the above steps, 
 	Since we removed all the duplicates above, there would not be any over reporting. Since the values we calculated in the previous task were all integers
 	we had to cast them to real and used the round() function to convert to 2 decimal places.
 
@@ -205,7 +219,7 @@ The output should be a `daily_ticket` table with the following shape:
 
 Solution:
 
-	Daily_ticket table was created at the start. We did all the necessary calculations in the previous steps. We already extracted date in the above steps, 
+	`daily_ticket table was created at the start. We did all the necessary calculations in the previous steps. We already extracted date in the above steps, 
 	Since we had to calculate ticket/purchase per user daily, we calculated all the total amounts and items per ticket/per session. Once we had that, we found the ticket size 
 	per user and tagged daily sales against them. We then used the *NTILE(100)* function to create buckets of our ticket sizes. Then we used the 25th,50th and 75th bucket,
 	and select the maximum of the bucket since the relative values are below that. 
@@ -221,11 +235,11 @@ Make sure to **load the data incrementally** into the existing tables without dr
 
 Solution:
 	
-	For incremental load, the best practice is to have a staging table, which will then load into intermediate table and finally into final table. Since truncate/delete was not encourages,
+	For incremental load, the best practice is to have a staging table, which will then load into intermediate table and finally into final table. Since truncate/delete was not encouraged,
 	we used NOT Exists where if an old record or a same record were to be inserted, the query would exclude these rows. To have a proper batch process, we executed "run" command recursively based
 	on the number of files in the landing directory. We had created the table once, before executing our loop. 
-	Once it is confirmed file is available in the landing directory, we pick one file and execute all the targets created above. We move the file from landing directory to file directory. We remove the 
-	first line and create a final load file and move the actual to done directory to keep a record of all the files loaded, in case we might need to load again. Having all the NOT Exists check ensure,
+	Once it is confirmed file is available in the landing directory, we pick one file and execute all the targets created above. We move the file from landing directory to file directory. We create 
+	a final load file and move the actual to done directory to keep a record of all the files loaded, in case we might need to load again. Having all the NOT Exists check ensure,
 	there are no duplicates.We can run the same task again and we won't have duplicates.
 	
 	
