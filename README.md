@@ -6,7 +6,7 @@ It is not mandatory, but you can also include an additional `README` file to exp
 
 
 
-#### Detailed Information has been mentioned below each task. All the SQL are named after their tasks.####
+#### Detailed Information has been mentioned below each task. All the SQL are named after their tasks.
 
 
 
@@ -18,11 +18,14 @@ It is not mandatory, but you can also include an additional `README` file to exp
 ### Pre-Ingestion
 
 	We have created 2 targets in Makefile *create-tables* and *file_prep*. The create-tables target will create empty tables for the below ingestion and analysis.
-	The file_prep will prepare the file. Since *.import* SQLITE command loads complete data, we will remove the header used *sed* command and create a generic loading file "Latest_File.csv".
+	The file_prep will prepare the file. Since *.import* SQLITE command loads complete data, we will remove the header using *sed* command and create a generic loading file "Latest_File.csv".
 	Once file to be loaded is prepared, we will move the actual file to a done directory so we can have a backup of the file if it is required. We also zip the actual file to make sure there aren't any space issues.
-	The above step is when we have the following ingestion running on a machine.
+	The above steps are done when we have the following ingestion running on a machine.
 
 
+### Post-Ingestion
+
+	Pose Ingestion target removed the loaded file from the loading directory.
 
 
 ### Task 1: Ingesting the data
@@ -187,6 +190,7 @@ The output should be a `daily_funnel` table with the following shape:
 |        ... |      ... |         |     ... |        ... |               ... |              ... |                 ... |
 
 
+
 #### Solution:
 
 	`daily_funnel` table was created at the start. We did all the necessary calculations in the previous steps. We already extracted date in the above steps, 
@@ -228,6 +232,7 @@ The output should be a `daily_ticket` table with the following shape:
 
 So far you have only worked with one of the source CSV files. The objective now is to reproduce all the previous steps with the other file with data for February 2020 (`2020-Feb.csv`). 
 Make sure to **load the data incrementally** into the existing tables without droping or truncating them. The objective is to simulate a batch process that would happen every once in a while when new data is available.
+
 
 #### Solution:
 	
