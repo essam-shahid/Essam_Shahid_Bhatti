@@ -2,7 +2,7 @@
 
 The overal objective of the assignment is to ingest the raw files with the behavioural event data, clean them up and create a series of tables with aggregated data for analytical purposes. We will divide the challenge into several tasks. Remember to create a SQL script for each task, store it in the `sql` directory and add them to a target of the `Makefile` that will be executed when building the docker image.
 
-It is not mandatory, but you can also include an additional `README` file to explain any of the tasks of your solution and the decisions you've made.
+It is not mandatory, but you can also include an additional `README` file to explain any of the tasks of your #### Solution: and the decisions you've made.
 
 
 
@@ -31,7 +31,7 @@ The objective of this step is to ingest the source data from January (`2020-Jan.
  The structure of this table will depend on the process that you use to ingest the data, but it should have **at least one column for each of the columns in the source CSV file**.
 
 
-##Solution:
+#### Solution:
 
 	Empty table was created for staging in pre-ingestion. Ideally, staging table should be empty after every batch processing to avoid any duplicates but we had incorporated NOT Exists clause in the query to avoid
 	duplicates in our final table.
@@ -53,7 +53,7 @@ The output should be a table named `event_clean` with **exactly one column for e
 
 
 
-Solution:
+#### Solution:
 
 	We also created a clean table, which we can call `event_clean`. This table will have all the cleansed data after the checks and fixtures are applied. The following fixtures were applied
 	in the "transform-stg-table.sql":
@@ -100,7 +100,7 @@ Here we want you to calculate the aggregated sales per day. The output should be
 
 
 
-Solution:
+#### Solution:
 
 	`daily_sales` table was created at the start. We know,the event_type "purchase" is product purchased hence is marked as sale. We already extracted date in the above step, 
 	we would just count all the product ids sold on each event_date. Since we removed all the duplicates above, there would not be any over reporting due to duplicates.
@@ -131,7 +131,7 @@ The output should be a `daily_stats` table with the following shape:
 
 
 
-Solution:
+#### Solution:
 
 	`daily_stats` table was created at the start. We know,the event_types and how we can calculate the required stats. We already extracted date in the above steps, 
 	we would just count on each event_date. Since we removed all the duplicates above, there would not be any over reporting.
@@ -187,7 +187,7 @@ The output should be a `daily_funnel` table with the following shape:
 |        ... |      ... |         |     ... |        ... |               ... |              ... |                 ... |
 
 
-Solution:
+#### Solution:
 
 	`daily_funnel` table was created at the start. We did all the necessary calculations in the previous steps. We already extracted date in the above steps, 
 	Since we removed all the duplicates above, there would not be any over reporting. Since the values we calculated in the previous task were all integers
@@ -213,7 +213,7 @@ The output should be a `daily_ticket` table with the following shape:
 
 
 
-Solution:
+#### Solution:
 
 	`daily_ticket table was created at the start. We did all the necessary calculations in the previous steps. We already extracted date in the above steps, 
 	Since we had to calculate ticket/purchase per user daily, we calculated all the total amounts and items per ticket/per session. Once we had that, we found the ticket size 
@@ -229,7 +229,7 @@ Solution:
 So far you have only worked with one of the source CSV files. The objective now is to reproduce all the previous steps with the other file with data for February 2020 (`2020-Feb.csv`). 
 Make sure to **load the data incrementally** into the existing tables without droping or truncating them. The objective is to simulate a batch process that would happen every once in a while when new data is available.
 
-Solution:
+#### Solution:
 	
 	For incremental load, the best practice is to have a staging table, which will then load into intermediate table and finally into final table. Since truncate/delete was not encouraged,
 	we used NOT Exists where if an old record or a same record were to be inserted, the query would exclude these rows. To have a proper batch process, we executed "run" command recursively based
