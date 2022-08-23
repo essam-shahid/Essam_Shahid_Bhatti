@@ -23,4 +23,4 @@ WHERE
 	FROM
 		daily_funnel
 	WHERE
-		A.DATE = DATE)
+		A.DATE = DATE);

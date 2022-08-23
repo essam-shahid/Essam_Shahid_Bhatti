@@ -23,4 +23,4 @@ WHERE
 	FROM
 		daily_sales
 	WHERE
-		A.DATE = DATE)
+		A.DATE = DATE);
