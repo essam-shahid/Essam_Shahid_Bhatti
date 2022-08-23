@@ -11,7 +11,12 @@ It is not mandatory, but you can also include an additional `README` file to exp
 
 
 ### Define Variables for file Check:
-	Variables where defined for landing files and loading files and done directory to move the file to done once we have loaded in our tables. "/assignment/data/load" and "/assignment/data/done" directory were created in the dockerfile.
+	Variables where defined for landing files and loading files and done directory to move the file to done once we have loaded in our tables. 
+	The following directories were created in the dockerfile for file prep:
+	
+	/assignment/data/load
+	/assignment/data/done
+	/assignment/data/file
 
 
 

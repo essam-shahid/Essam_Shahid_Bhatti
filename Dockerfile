@@ -12,6 +12,9 @@ RUN mkdir /assignment
 RUN mkdir /assignment/data
 RUN mkdir /assignment/sql
 RUN mkdir /assignment/db
+
+# Create the directories for the file prep
+
 RUN mkdir /assignment/data/file
 RUN mkdir /assignment/data/done
 RUN mkdir /assignment/data/load
