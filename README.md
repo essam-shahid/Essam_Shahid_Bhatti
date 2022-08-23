@@ -1,8 +1,4 @@
-#Essam Shahid Bhatti FinalHotel Challenge#
-
-
-
-## Assignment ##
+## Essam Shahid Bhatti FinalHotel Assignment ##
 
 The overal objective of the assignment is to ingest the raw files with the behavioural event data, clean them up and create a series of tables with aggregated data for analytical purposes. We will divide the challenge into several tasks. Remember to create a SQL script for each task, store it in the `sql` directory and add them to a target of the `Makefile` that will be executed when building the docker image.
 
