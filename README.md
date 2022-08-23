@@ -1,68 +1,5 @@
-# FindHotel's Analytics Engineer assignment
+====================================****Essam Shahid Bhatti Final Hotel Assignment***===============================
 
-## Introduction
-
-This assignment is part of the recruitment process of Analytics Engineers here at FindHotel. The purpose is to asses the technical skills of our candidatess in a generic scenario, similar to the one they would experience at FindHotel.
-
-Please, read carefully all the instructions before starting to work on your solution and feel free to contact us if you have any doubt.
-
-## Setup
-
-You need to fork this repository to work on your solution to the assignment.
-
-The repository has the following content:
-- A [Dockerfile](.Dockerfile) to build the base docker image for the assignment.
-- A [Makefile](.Makefile) that should be used to execute all the necessary steps of the assignment.
-- A [data](./data) directory with the source raw data files.
-- A [sql](./sql) directory for your SQL scripts. We have added a sample script for reference.
-
-The `Dockerfile` is based on Ubuntu 20.04 and has SQLite, the RDBMS that you will use in this exercise, installed. It also has the `make` utility installed, which you will have to use to execute all the necessary steps of the assignment.
-
-We have created a sample `Makefile` for reference with a target that executes the sample SQL script (`create-empty-table.sql`). We have also added an empty `run` target, which is the default one for the `make` utility. We expect you to add more targets for all the different steps of your solution and to trigger them in the correct order from the `run` target.
-
-We will test your solution in the following way:
-- Building the docker image
-```bash
-$ docker build -t findhotel/assignment .
-```
-- Running the docker container interactively to connect to the DB:
-```bash
-$ docker run -it --rm findhotel/assignment
-```
-- Checking the tables that you have produced:
-```bash
-sqlite> .tables
-sqlite> SELECT * FROM <table_name>;
-...
-sqlite> .exit
-```
-
-We will also have a look at your SQL scripts, which we expect to be available in the `sql` directory, to understand how did you build all the different tables in the DB.
-
-## Source data
-
-You will work with a dataset of events from an online cosmetics store collected using a Customer Data Platform (CDP). It is stored in the form of CSV files in the [data](./data) directory with the following structure:
-
-- `event_time`: Time when event happened at (in UTC).
-- `event_type`:	Type of behavioural event.
-- `product_id`:	Unique numeric identifier of a product.
-- `category_id`: Unique numeric identifier of the category of a product.
-- `category_code`: Text identifier of the category of a product.
-- `brand`: Text identifier of the brand of a product.
-- `price`: Float price of a product.
-- `user_id`: Unique numeric identifier of a user.
-- `user_session`: Unique UUID identifier of a user session. A session is closed after a predefined time period.
-
-The dataset contains 4 types of behavioural events defined as follows:
-
-- `view`, a user viewed a product.
-- `cart`, a user added a product to the shopping cart.
-- `remove_from_cart`, a user removed a product from the shopping cart.
-- `purchase`, a user purchased a product.
-
-The sample dataset is composed of 2 CSV files, one with data for January 2020 and one with data for February 2020.
-
-Note that the files have been compressed to meet the GitHub file size limit policy. However, the docker image takes care of uncompressing them.
 
 ## Assignment
 
@@ -70,15 +7,77 @@ The overal objective of the assignment is to ingest the raw files with the behav
 
 It is not mandatory, but you can also include an additional `README` file to explain any of the tasks of your solution and the decisions you've made.
 
+
+
+****###### Detailed Information has been mentioned below each task. All the SQL are named after their tasks.*****############
+
+
+
+#Define Variables for file Check:
+	Variables where defined for landing files and loading files and done directory to move the file to done once we have loaded in our tables
+
+
+
+
 ### Task 1: Ingesting the data
 
-The objective of this step is to ingest the source data from January (`2020-Jan.csv`) into a table named `event_raw`. For example, you can use the `.import` command from SQLite to do it. The structure of this table will depend on the process that you use to ingest the data, but it should have **at least one column for each of the columns in the source CSV file**.
+The objective of this step is to ingest the source data from January (`2020-Jan.csv`) into a table named `event_raw`. For example, you can use the `.import` command from SQLite to do it.
+ The structure of this table will depend on the process that you use to ingest the data, but it should have **at least one column for each of the columns in the source CSV file**.
+
+
+Solution:
+
+	Empty table was created for staging. The table will always be dropped and created so everytime a new file is to be loaded, we will use empty tables and reduce the risk of 
+	duplicates in our final table.
+	
+	Once the empty table was created, we set the mode to "csv" so input file can be handled as comma separated, and we used the sqllite3 CMD Line command "-separator ',' ".import $(file_dir)/2020-Jan.csv event_raw"
+	which allowed the file to be inserted in each column as per defined in the "create-empty-stg-table.sql". This way, each column in the source file has a column in staging table.
+	
+	
+	***We have included the NOT Exists clause so there are no duplicates in the final table if job is executed more than once with the same data.***
+
+
+
 
 ### Task 2: Cleaning up the data
 
 Depending on the process you've followed to ingest the data, the `event_raw` table may have incorrect data types, the `NULL` values may have been ingested as empty strings, etc. In this step we want you to perform all the necessary clean up to make sure that the quality of the data is high and it is ready to be consumed. The task is open ended in the sense that you can apply any processing that you think will improve the quality of the dataset.
 
 The output should be a table named `event_clean` with **exactly one column for each of the columns in the source CSV file** and the most appropriate data types. You will use the `event_clean` table in the following steps as the basis to extract meaningfull insights.
+
+
+
+Solution:
+
+	We also created a clean table, which we can call clean table. This table will have all the cleansed data after the checks and fixtures are applied. The following fixtures were applied
+	in the "transform-stg-table.sql":
+	
+	1) Special characters or Space in text/characters: 
+			Once we get any columns with text data type, there is always risk of having special characters like space which is not visible at first, but can cause 
+			issues while joining with dimensional tables.  Hence we added trim() function with each column to remove all the empty spaces.(CTE: RM_Space)
+			
+	2) Empty Values in Category_Code and Brand:
+			We received NULL values in the Category_Code and Brand columns. This could cause missing numbers in reporting based on Category_Code and Brand
+			so we introduced another value "OTHERS" in both columns so we can have complete reporting.(CTE: MISSING_CODE_BRAND)
+			
+	3) Empty Value in USER_SESSION:
+			We also received missing values in USER Session , which can cause duplicates on price or missing so we used lag and lead functions	against event
+			date and time to check whether the same session was used or not. If the event_time was equal to previous session, we tagged the previous session, 
+			if the event_time was equal to next we tagged the leading session.
+			If it was not equal, we calculated the difference and tagged the session with whoever it was closer. (CTE: MISSING_CODE_BRAND)
+			
+	4) Missing Price:
+			Although the file was fine, there might be issue if price is missing. So we use max price with window function partitioned on product_id,category_id
+			to find any missing price to calculate.(CTE: MISSING_CODE_BRAND)
+			
+	5) Dups assign and remove:
+			Once all the missing values were added/assigned, we used row_number() to assign rn to each row so we can finds duplicates and removed them
+			by using the 1 row for each row. (CTE: DUPS and select)
+
+	***We have included the NOT Exists clause so there are no duplicates in the final table if job is executed more than once with the same data.***
+
+	
+
 
 ### Task 3: Daily sales
 
@@ -88,6 +87,16 @@ Here we want you to calculate the aggregated sales per day. The output should be
 |------------|-------------|
 | 2020-01-01 |        1000 |
 |        ... |         ... |
+
+
+
+Solution:
+
+	Daily_sales table was created at the start. We know,the event_type "purchase" is product purchased hence is marked as sale. We already extracted date in the above steps, 
+	we would just count all the product ids sold on each event_date. Since we removed all the duplicates above, there would not be any over reporting.
+	
+	
+	***We have included the NOT Exists clause so there are no duplicates in the final table if job is executed more than once with the same data.***
 
 
 ### Task 4: Daily stats of visitors, sessions, viewers, views, leaders, leads, purchasers and purchases
@@ -109,6 +118,47 @@ The output should be a `daily_stats` table with the following shape:
 | 2020-01-01 |     1000 |     1250 | 950     | 1125  |     750 |   825 |        250 |       500 |
 |        ... |      ... |      ... |         |       |     ... |   ... |        ... |       ... |
 
+
+
+
+Solution:
+
+	Daily_stats table was created at the start. We know,the event_types and how we can calculate the required stats. We already extracted date in the above steps, 
+	we would just count on each event_date. Since we removed all the duplicates above, there would not be any over reporting.
+	
+	- `visitors`: Number of different users that have visited the store: 
+				  Since we need to find all the "different" users that visited the store, we would count the "distinct" users ids which visited the store.
+				  
+	- `sessions`: Number of different user sessions for the users that have visited the store.
+				  Count the Distinct sessions of a particular user every day would give Sessions
+				
+	- `viewers`: Number of different users that have viewed at least one item.
+				  Count the distinct user_id who have viewed any product. We use case statement to assign NULLs to any other event type, then count the 
+				  user_ids to find the different users who have viewed atleast one item. 
+				  
+					
+	- `views`: Total number of products viewed.
+				 Assign NULLS to all other event_types and count the distinct product_ids which were viewed to give total views.
+
+	
+	- `leaders`: Number of different users that have added at least one item to the cart.
+				 The event_type 'cart' gives items added to cart and we find distinct users who added atleast one item in their cart.
+	
+	
+	- `leads`: Total number of products added to the cart.
+				Assign NULLS to all other event_types and count the distinct product_ids which were viewed to give total leads.
+	
+	- `purchasers`: Number of different users that have purchased at least one item.
+				Assign NULLS to all other event_types and count the distinct user_ids who purchased one time to give different purchasers.
+				
+	- `purchases`: Total number of products purchased.
+				Assign NULLS to all other event_types and count the distinct product_ids which have been purchased one time to give Total purchasers.
+	
+	
+	***We have included the NOT Exists clause so there are no duplicates in the final table if job is executed more than once with the same data.***
+	
+	
+	
 ### Task 5: Daily conversion funnel
 
 Building up on top of the previous insight, now we want you to calculate the daily conversion funnel. For that we want to know the ratio of users that make it from one step to the next of the journey.
@@ -126,9 +176,23 @@ The output should be a `daily_funnel` table with the following shape:
 | 2020-01-01 |     1000 | 950     |     750 |        250 |              0.95 |             0.79 |                0.33 |
 |        ... |      ... |         |     ... |        ... |               ... |              ... |                 ... |
 
+
+Solution:
+
+	Daily_funnel table was created at the start. We did all the necessary calculations in the previous steps. We already extracted date in the above steps, 
+	Since we removed all the duplicates above, there would not be any over reporting. Since the values we calculated in the previous task were all integers
+	we had to cast them to real and used the round() function to convert to 2 decimal places.
+
+
+	***We have included the NOT Exists clause so there are no duplicates in the final table if job is executed more than once with the same data.***
+
+
+
 ### Task 6: Daily ticket size
 
-We want to understand which is the distribution of the purchase or ticket size per user daily. For that, we consider that all the items purchased by a user during one session belong to the same purchase or ticket. We will calculate some basic statistics (min, max and 25th, 50th and 75th percentiles) about the ticket size to estimate it's distribution.
+We want to understand which is the distribution of the purchase or ticket size per user daily. For that, 
+we consider that all the items purchased by a user during one session belong to the same purchase or ticket. 
+We will calculate some basic statistics (min, max and 25th, 50th and 75th percentiles) about the ticket size to estimate it's distribution.
 
 The output should be a `daily_ticket` table with the following shape:
 
@@ -137,9 +201,37 @@ The output should be a `daily_ticket` table with the following shape:
 | 2020-01-01 |        1000 |       1.25 |             2.50 |            10.35 |            25.50 |     150.25 |
 |        ... |         ... |        ... |              ... |              ... |              ... |        ... |
 
+
+
+Solution:
+
+	Daily_ticket table was created at the start. We did all the necessary calculations in the previous steps. We already extracted date in the above steps, 
+	Since we had to calculate ticket/purchase per user daily, we calculated all the total amounts and items per ticket/per session. Once we had that, we found the ticket size 
+	per user and tagged daily sales against them. We then used the *NTILE(100)* function to create buckets of our ticket sizes. Then we used the 25th,50th and 75th bucket,
+	and select the maximum of the bucket since the relative values are below that. 
+
+	***We have included the NOT Exists clause so there are no duplicates in the final table if job is executed more than once with the same data.***
+
+
+
 ### Task 7: Incremental load
 
-So far you have only worked with one of the source CSV files. The objective now is to reproduce all the previous steps with the other file with data for February 2020 (`2020-Feb.csv`). Make sure to **load the data incrementally** into the existing tables without droping or truncating them. The objective is to simulate a batch process that would happen every once in a while when new data is available.
+So far you have only worked with one of the source CSV files. The objective now is to reproduce all the previous steps with the other file with data for February 2020 (`2020-Feb.csv`). 
+Make sure to **load the data incrementally** into the existing tables without droping or truncating them. The objective is to simulate a batch process that would happen every once in a while when new data is available.
+
+Solution:
+	
+	For incremental load, the best practice is to have a staging table, which will then load into intermediate table and finally into final table. Since truncate/delete was not encourages,
+	we used NOT Exists where if an old record or a same record were to be inserted, the query would exclude these rows. To have a proper batch process, we executed "run" command recursively based
+	on the number of files in the landing directory. We had created the table once, before executing our loop. 
+	Once it is confirmed file is available in the landing directory, we pick one file and execute all the targets created above. We move the file from landing directory to file directory. We remove the 
+	first line and create a final load file and move the actual to done directory to keep a record of all the files loaded, in case we might need to load again. Having all the NOT Exists check ensure,
+	there are no duplicates.We can run the same task again and we won't have duplicates.
+	
+	
+	***We have included the NOT Exists clause so there are no duplicates in the final table if job is executed more than once with the same data.***
+
+
 
 ## References
 
